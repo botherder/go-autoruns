@@ -1,7 +1,7 @@
 package autoruns
 
 import (
-    "strings"
+	"strings"
 	"path/filepath"
 	"github.com/botherder/go-hashfile"
 )

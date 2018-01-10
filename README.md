@@ -9,14 +9,14 @@ with the following properties:
 
 ```go
 type Autorun struct {
-	Type		string `json:"type"`
-	Location	string `json:"location"`
-	ImagePath	string `json:"image_path"`
-	ImageName	string `json:"image_name"`
-	Arguments	string `json:"arguments"`
-	MD5         string `json:"md5"`
-	SHA1		string `json:"sha1"`
-	SHA256		string `json:"sha256"`
+	Type	   	string `json:"type"`
+	Location   	string `json:"location"`
+	ImagePath  	string `json:"image_path"`
+	ImageName  	string `json:"image_name"`
+	Arguments  	string `json:"arguments"`
+	MD5			string `json:"md5"`
+	SHA1	   	string `json:"sha1"`
+	SHA256	 	string `json:"sha256"`
 }
 ```
 
@@ -37,20 +37,20 @@ Following is a working example:
 package main
 
 import (
-    "fmt"
-    "github.com/botherder/go-autoruns"
+	"fmt"
+	"github.com/botherder/go-autoruns"
 )
 
 func main() {
-    autoruns := autoruns.Autoruns()
+	autoruns := autoruns.Autoruns()
 
-    for _, autorun := range(autoruns) {
-        fmt.Println(autorun.Type)
-        fmt.Println(autorun.Location)
-        fmt.Println(autorun.ImagePath)
-        fmt.Println(autorun.Arguments)
-        fmt.Println("")
-    }    
+	for _, autorun := range(autoruns) {
+		fmt.Println(autorun.Type)
+		fmt.Println(autorun.Location)
+		fmt.Println(autorun.ImagePath)
+		fmt.Println(autorun.Arguments)
+		fmt.Println("")
+	}
 }
 ```
 
