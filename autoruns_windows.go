@@ -79,10 +79,7 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 				}
 
 				// We pass the value string to a function to return an Autorun.
-				newAutorun, err := stringToAutorun("run_key", fmt.Sprintf("%s\\%s", reg, keyName),  value, true)
-				if err != nil {
-					continue
-				}
+				newAutorun := stringToAutorun("run_key", fmt.Sprintf("%s\\%s", reg, keyName),  value, true)
 
 				// Add the new autorun to the records.
 				records = append(records, newAutorun,)
@@ -125,10 +122,7 @@ func windowsGetServices() (records []*Autorun) {
 		}
 
 		// We pass the value string to a function to return an Autorun.
-		newAutorun, err := stringToAutorun("service", fmt.Sprintf("LOCAL_MACHINE\\%s", name), imagePath, true)
-		if err != nil {
-			continue
-		}
+		newAutorun := stringToAutorun("service", fmt.Sprintf("LOCAL_MACHINE\\%s", name), imagePath, true)
 
 		// Add the new autorun to the records.
 		records = append(records, newAutorun,)
@@ -162,10 +156,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 		// Loop through all files in folder.
 		for _, fileEntry := range filesList {
 			// Instantiate new autorun record.
-			newAutorun, err := stringToAutorun("startup", startupPath, filepath.Join(startupPath, fileEntry.Name()), false)
-			if err != nil {
-				continue
-			}
+			newAutorun := stringToAutorun("startup", startupPath, filepath.Join(startupPath, fileEntry.Name()), false)
 
 			// Add new record to list.
 			records = append(records, newAutorun,)
