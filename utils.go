@@ -37,5 +37,5 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 		SHA256: sha256,
 	}
 
-	return &newAutorun, nil
+	return &newAutorun
 }
