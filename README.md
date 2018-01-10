@@ -2,7 +2,7 @@
 
 Collect records of programs registered for persistence on the running system.
 
-# Usage
+## Usage
 
 Invoke the `Autoruns()` function, which will return a slice of `Autorun` structs
 with the following properties:
