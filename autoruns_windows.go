@@ -175,10 +175,10 @@ func windowsGetStartupFiles() (records []*Autorun) {
 				continue
 			}
 
-			filePath := filepath.Join(startupPath, fileEntry.Name()
+			filePath := filepath.Join(startupPath, fileEntry.Name())
 
 			// Instantiate new autorun record.
-			newAutorun := stringToAutorun("startup", startupPath, filePath), false)
+			newAutorun := stringToAutorun("startup", startupPath, filePath, false)
 
 			// Add new record to list.
 			records = append(records, newAutorun,)
