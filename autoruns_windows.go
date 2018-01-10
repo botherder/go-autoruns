@@ -122,7 +122,7 @@ func windowsGetServices() (records []*Autorun) {
 		}
 
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", fmt.Sprintf("LOCAL_MACHINE\\%s", name), imagePath, true)
+		newAutorun := stringToAutorun("service", fmt.Sprintf("LOCAL_MACHINE\\%s\\", servicesKey, name), imagePath, true)
 
 		// Add the new autorun to the records.
 		records = append(records, newAutorun,)
@@ -155,6 +155,11 @@ func windowsGetStartupFiles() (records []*Autorun) {
 
 		// Loop through all files in folder.
 		for _, fileEntry := range filesList {
+			// We skip desktop.ini files.
+			if fileEntry.Name() == "desktop.ini" {
+				continue
+			}
+
 			// Instantiate new autorun record.
 			newAutorun := stringToAutorun("startup", startupPath, filepath.Join(startupPath, fileEntry.Name()), false)
 
