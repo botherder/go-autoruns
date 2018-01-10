@@ -11,6 +11,16 @@ import (
 	"github.com/mattn/go-shellwords"
 )
 
+func regToString(reg registry.Key) string {
+	if reg == registry.LOCAL_MACHINE {
+		return "LOCAL_MACHINE"
+	} else if reg == registry.CURRENT_USER {
+		return "CURRENT_USER"
+	} else {
+		return ""
+	}
+}
+
 func parsePath(entryValue string) ([]string, error) {
 	// We clean the path to introduce environment variables.
 	re := regexp.MustCompile(`%(?i)SystemRoot%`)
@@ -78,8 +88,10 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 					continue
 				}
 
+				imageLocation := fmt.Sprintf("%s\\%s", regToString(reg), keyName)
+
 				// We pass the value string to a function to return an Autorun.
-				newAutorun := stringToAutorun("run_key", fmt.Sprintf("%s\\%s", reg, keyName),  value, true)
+				newAutorun := stringToAutorun("run_key", imageLocation,  value, true)
 
 				// Add the new autorun to the records.
 				records = append(records, newAutorun,)
@@ -92,10 +104,11 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 
 // This function enumerates Windows Services.
 func windowsGetServices() (records []*Autorun) {
-	var servicesKey = "System\\CurrentControlSet\\Services"
+	var reg registry.Key = registry.LOCAL_MACHINE
+	var servicesKey string = "System\\CurrentControlSet\\Services"
 
 	// Open the registry key.
-	key, err := registry.OpenKey(registry.LOCAL_MACHINE, servicesKey, registry.READ)
+	key, err := registry.OpenKey(reg, servicesKey, registry.READ)
 	if err != nil {
 		return
 	}
@@ -109,7 +122,7 @@ func windowsGetServices() (records []*Autorun) {
 	for _, name := range names {
 		// We open each subkey.
 		subkeyPath := fmt.Sprintf("%s\\%s", servicesKey, name)
-		subkey, err := registry.OpenKey(registry.LOCAL_MACHINE, subkeyPath, registry.READ)
+		subkey, err := registry.OpenKey(reg, subkeyPath, registry.READ)
 		if err != nil {
 			continue
 		}
@@ -121,8 +134,10 @@ func windowsGetServices() (records []*Autorun) {
 			continue
 		}
 
+		imageLocation := fmt.Sprintf("%s\\%s", regToString(reg), subkeyPath)
+
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", fmt.Sprintf("LOCAL_MACHINE\\%s\\", servicesKey, name), imagePath, true)
+		newAutorun := stringToAutorun("service", imageLocation, imagePath, true)
 
 		// Add the new autorun to the records.
 		records = append(records, newAutorun,)
@@ -141,7 +156,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 	}
 
 	// The base path is the same for both.
-	startupBasepath := "Microsoft\\Windows\\Start Menu\\Programs\\StartUp"
+	var startupBasepath string = "Microsoft\\Windows\\Start Menu\\Programs\\StartUp"
 
 	for _, folder := range(folders) {
 		// Get the full path.
@@ -160,8 +175,10 @@ func windowsGetStartupFiles() (records []*Autorun) {
 				continue
 			}
 
+			filePath := filepath.Join(startupPath, fileEntry.Name()
+
 			// Instantiate new autorun record.
-			newAutorun := stringToAutorun("startup", startupPath, filepath.Join(startupPath, fileEntry.Name()), false)
+			newAutorun := stringToAutorun("startup", startupPath, filePath), false)
 
 			// Add new record to list.
 			records = append(records, newAutorun,)
