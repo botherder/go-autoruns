@@ -14,7 +14,7 @@ type Autorun struct {
 	ImagePath	string `json:"image_path"`
 	ImageName	string `json:"image_name"`
 	Arguments	string `json:"arguments"`
-	MD5			string `json:"md5"`
+	MD5         string `json:"md5"`
 	SHA1		string `json:"sha1"`
 	SHA256		string `json:"sha256"`
 }
