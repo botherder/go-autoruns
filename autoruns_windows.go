@@ -11,7 +11,8 @@ import (
 	"github.com/mattn/go-shellwords"
 )
 
-func regToString(reg registry.Key) string {
+// Just return a string value for a given registry root Key.
+func registryToString(reg registry.Key) string {
 	if reg == registry.LOCAL_MACHINE {
 		return "LOCAL_MACHINE"
 	} else if reg == registry.CURRENT_USER {
@@ -33,6 +34,7 @@ func parsePath(entryValue string) ([]string, error) {
 	entryValue = strings.Replace(entryValue, "\\", "\\\\", -1)
 
 	// Parse the value to separate path with arguments.
+	// TODO: this is super spaghetti and doesn't actually always work. Fix please.
 	parser := shellwords.NewParser()
 	parser.ParseEnv = true
 	args, err := parser.Parse(entryValue)
@@ -88,7 +90,7 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 					continue
 				}
 
-				imageLocation := fmt.Sprintf("%s\\%s", regToString(reg), keyName)
+				imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), keyName)
 
 				// We pass the value string to a function to return an Autorun.
 				newAutorun := stringToAutorun("run_key", imageLocation,  value, true)
@@ -134,7 +136,7 @@ func windowsGetServices() (records []*Autorun) {
 			continue
 		}
 
-		imageLocation := fmt.Sprintf("%s\\%s", regToString(reg), subkeyPath)
+		imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), subkeyPath)
 
 		// We pass the value string to a function to return an Autorun.
 		newAutorun := stringToAutorun("service", imageLocation, imagePath, true)
