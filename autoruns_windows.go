@@ -65,6 +65,8 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 	keyNames := []string{
 		"Software\\Microsoft\\Windows\\CurrentVersion\\Run",
 		"Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+		"Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Run",
+		"Software\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
 	}
 
 	// We loop through HKLM and HKCU.
