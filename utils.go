@@ -22,9 +22,9 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 		}
 	}
 
-	md5, _ := hashfile.HashFile(imagePath, "md5")
-	sha1, _ := hashfile.HashFile(imagePath, "sha1")
-	sha256, _ := hashfile.HashFile(imagePath, "sha256")
+	md5, _ := files.HashFile(imagePath, "md5")
+	sha1, _ := files.HashFile(imagePath, "sha1")
+	sha256, _ := files.HashFile(imagePath, "sha256")
 
 	newAutorun := Autorun{
 		Type: entryType,
