@@ -3,7 +3,7 @@ package autoruns
 import (
 	"strings"
 	"path/filepath"
-	"github.com/botherder/go-hashfile"
+	"github.com/botherder/go-files"
 )
 
 func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool) *Autorun {
