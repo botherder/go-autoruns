@@ -24,10 +24,11 @@ func registryToString(reg registry.Key) string {
 
 func parsePath(entryValue string) ([]string, error) {
 	// We clean the path to introduce environment variables.
-	re := regexp.MustCompile(`%(?i)SystemRoot%`)
+	re := regexp.MustCompile(`\%(?i)SystemRoot\%`)
 	entryValue = re.ReplaceAllString(entryValue, os.Getenv("SystemRoot"))
-	// Same...
-	re = regexp.MustCompile(`%(?i)ProgramFiles%`)
+	re = regexp.MustCompile(`\\(?i)SystemRoot`)
+	entryValue = re.ReplaceAllString(entryValue, os.Getenv("SystemRoot"))
+	re = regexp.MustCompile(`\%(?i)ProgramFiles\%`)
 	entryValue = re.ReplaceAllString(entryValue, os.Getenv("ProgramFiles"))
 
 	// We clean the path for proper backslashes.
