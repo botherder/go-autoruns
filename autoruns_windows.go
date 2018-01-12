@@ -3,12 +3,12 @@ package autoruns
 import (
 	"os"
 	"fmt"
-	"regexp"
 	"strings"
 	"io/ioutil"
 	"path/filepath"
 	"golang.org/x/sys/windows/registry"
 	"github.com/mattn/go-shellwords"
+	"github.com/botherder/go-files"
 )
 
 // Just return a string value for a given registry root Key.
@@ -23,13 +23,8 @@ func registryToString(reg registry.Key) string {
 }
 
 func parsePath(entryValue string) ([]string, error) {
-	// We clean the path to introduce environment variables.
-	re := regexp.MustCompile(`\%(?i)SystemRoot\%`)
-	entryValue = re.ReplaceAllString(entryValue, os.Getenv("SystemRoot"))
-	re = regexp.MustCompile(`\\(?i)SystemRoot`)
-	entryValue = re.ReplaceAllString(entryValue, os.Getenv("SystemRoot"))
-	re = regexp.MustCompile(`\%(?i)ProgramFiles\%`)
-	entryValue = re.ReplaceAllString(entryValue, os.Getenv("ProgramFiles"))
+	// We expand environment variables.
+	entryValue = files.ExpandWindows(entryValue)
 
 	// We clean the path for proper backslashes.
 	entryValue = strings.Replace(entryValue, "\\", "\\\\", -1)
