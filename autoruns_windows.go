@@ -71,9 +71,9 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 	}
 
 	// We loop through HKLM and HKCU.
-	for _, reg := range(regs) {
+	for _, reg := range regs {
 		// We loop through the keys we're interested in.
-		for _, keyName := range(keyNames) {
+		for _, keyName := range keyNames {
 			// Open registry key.
 			key, err := registry.OpenKey(reg, keyName, registry.READ)
 			if err != nil {
@@ -163,7 +163,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 	// The base path is the same for both.
 	var startupBasepath string = "Microsoft\\Windows\\Start Menu\\Programs\\StartUp"
 
-	for _, folder := range(folders) {
+	for _, folder := range folders {
 		// Get the full path.
 		startupPath := filepath.Join(folder, startupBasepath)
 
