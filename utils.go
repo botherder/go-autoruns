@@ -15,9 +15,11 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 		args, err := parsePath(entryValue)
 
 		if err == nil {
-			imagePath = args[0]
-			if len(args) > 1 {
-				argsString = strings.Join(args[1:], " ")
+			if len(args) > 0 {
+				imagePath = args[0]
+				if len(args) > 1 {
+					argsString = strings.Join(args[1:], " ")
+				}
 			}
 		}
 	}
