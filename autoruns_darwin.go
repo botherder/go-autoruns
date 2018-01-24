@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"howett.net/plist"
+	"github.com/botheder/go-files"
 )
 
 type Plist struct {
@@ -14,11 +15,7 @@ type Plist struct {
 	RunAtLoad bool `plist:"RunAtLoad"`
 }
 
-func parsePath(entryValue string) ([]string, error) {
-	return []string{}, nil
-}
-
-func parsePlists(recordType string, folders []string) (records []*Autorun) {
+func parsePlists(entryType string, folders []string) (records []*Autorun) {
 	for _, folder := range folders {
 		// Check if the folders exists.
 		if _, err := os.Stat(folder); os.IsNotExist(err) {
@@ -58,13 +55,29 @@ func parsePlists(recordType string, folders []string) (records []*Autorun) {
 				continue
 			}
 
-			// TODO: this is some spaghetti to generate the Autorun record.
-			// To change.
-			entryValue := strings.Join(p.ProgramArguments[:], " ")
-			newAutorun := stringToAutorun(recordType, folder, entryValue, true)
+			imagePath := p.ProgramArguments[0]
+			arguments := ""
+			if len(p.ProgramArguments > 1) {
+				arguments = strings.Join(p.ProgramArguments[1:], " ")
+			}
+
+			md5, _ := files.HashFile(imagePath, "md5")
+			sha1, _ := files.HashFile(imagePath, "sha1")
+			sha256, _ := files.HashFile(imagePath, "sha256")
+
+			newAutorun := Autorun{
+				Type: entryType,
+				Location: filePath,
+				ImagePath: imagePath,
+				ImageName: filepath.Base(imagePath),
+				Arguments: arguments,
+				MD5: md5,
+				SHA1: sha1,
+				SHA256: sha256,
+			}
 
 			// Add new record to list.
-			records = append(records, newAutorun,)
+			records = append(records, *newAutorun,)
 		}
 	}
 
