@@ -57,5 +57,5 @@ func main() {
 ## TODO
 
 - Extend support for other autorun records on Windows.
+- Extend support for other autorun records on Mac.
 - Add support for Linux.
-- Add support for Mac.
