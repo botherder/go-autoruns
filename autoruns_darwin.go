@@ -23,15 +23,15 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 		}
 
 		// Get list of files in folder.
-		files, err := ioutil.ReadDir(folder)
+		filesList, err := ioutil.ReadDir(folder)
 		if err != nil {
 			continue
 		}
 
 		// Loop through all files in folder.
-		for _, file := range files {
+		for _, fileEntry := range filesList {
 			// Open the plist file.
-			filePath := filepath.Join(folder, file.Name())
+			filePath := filepath.Join(folder, fileEntry.Name())
 			reader, err := os.Open(filePath)
 			if err != nil {
 				continue
@@ -57,7 +57,7 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 
 			imagePath := p.ProgramArguments[0]
 			arguments := ""
-			if len(p.ProgramArguments > 1) {
+			if len(p.ProgramArguments) > 1 {
 				arguments = strings.Join(p.ProgramArguments[1:], " ")
 			}
 
@@ -77,7 +77,7 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 			}
 
 			// Add new record to list.
-			records = append(records, *newAutorun,)
+			records = append(records, &newAutorun,)
 		}
 	}
 
