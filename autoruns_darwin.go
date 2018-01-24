@@ -11,6 +11,7 @@ import (
 type Plist struct {
 	Label string `plist:"Label"`
 	ProgramArguments []string `plist:"ProgramArguments"`
+	RunAtLoad bool `plist:"RunAtLoad"`
 }
 
 func parsePath(entryValue string) ([]string, error) {
@@ -49,6 +50,11 @@ func parsePlists(recordType string, folders []string) (records []*Autorun) {
 			}
 
 			if len(p.ProgramArguments) == 0 {
+				continue
+			}
+
+			// We skip those that do not start automatically.
+			if !p.RunAtLoad {
 				continue
 			}
 
