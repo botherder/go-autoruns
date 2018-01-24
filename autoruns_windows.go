@@ -163,19 +163,19 @@ func windowsGetStartupFiles() (records []*Autorun) {
 		startupPath := filepath.Join(folder, startupBasepath)
 
 		// Get list of files in folder.
-		filesList, err := ioutil.ReadDir(startupPath)
+		files, err := ioutil.ReadDir(startupPath)
 		if err != nil {
 			continue
 		}
 
 		// Loop through all files in folder.
-		for _, fileEntry := range filesList {
+		for _, file := range files {
 			// We skip desktop.ini files.
-			if fileEntry.Name() == "desktop.ini" {
+			if file.Name() == "desktop.ini" {
 				continue
 			}
 
-			filePath := filepath.Join(startupPath, fileEntry.Name())
+			filePath := filepath.Join(startupPath, file.Name())
 
 			// Instantiate new autorun record.
 			newAutorun := stringToAutorun("startup", startupPath, filePath, false)
