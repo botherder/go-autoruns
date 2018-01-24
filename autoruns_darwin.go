@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"howett.net/plist"
-	"github.com/botheder/go-files"
+	"github.com/botherder/go-files"
 )
 
 type Plist struct {
