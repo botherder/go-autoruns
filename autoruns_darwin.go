@@ -54,7 +54,7 @@ func parsePlists(recordType string, folders []string) (records []*Autorun) {
 
 			// TODO: this is some spaghetti to generate the Autorun record.
 			// To change.
-			entryValue := strings.Join(p.ProgramArguments[:], " "))
+			entryValue := strings.Join(p.ProgramArguments[:], " ")
 			newAutorun := stringToAutorun(recordType, folder, entryValue, true)
 
 			// Add new record to list.
