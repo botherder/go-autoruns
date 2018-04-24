@@ -1,14 +1,15 @@
 package autoruns
 
 import (
-	"os"
 	"fmt"
-	"strings"
 	"io/ioutil"
+	"os"
 	"path/filepath"
-	"golang.org/x/sys/windows/registry"
-	"github.com/mattn/go-shellwords"
+	"strings"
+
 	"github.com/botherder/go-files"
+	"github.com/mattn/go-shellwords"
+	"golang.org/x/sys/windows/registry"
 )
 
 // Just return a string value for a given registry root Key.
@@ -64,14 +65,14 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 	sha256, _ := files.HashFile(imagePath, "sha256")
 
 	newAutorun := Autorun{
-		Type: entryType,
-		Location: entryLocation,
+		Type:      entryType,
+		Location:  entryLocation,
 		ImagePath: imagePath,
 		ImageName: filepath.Base(imagePath),
 		Arguments: argsString,
-		MD5: md5,
-		SHA1: sha1,
-		SHA256: sha256,
+		MD5:       md5,
+		SHA1:      sha1,
+		SHA256:    sha256,
 	}
 
 	return &newAutorun
@@ -127,10 +128,10 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 				imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), keyName)
 
 				// We pass the value string to a function to return an Autorun.
-				newAutorun := stringToAutorun("run_key", imageLocation,  value, true)
+				newAutorun := stringToAutorun("run_key", imageLocation, value, true)
 
 				// Add the new autorun to the records.
-				records = append(records, newAutorun,)
+				records = append(records, newAutorun)
 			}
 		}
 	}
@@ -176,7 +177,7 @@ func windowsGetServices() (records []*Autorun) {
 		newAutorun := stringToAutorun("service", imageLocation, imagePath, true)
 
 		// Add the new autorun to the records.
-		records = append(records, newAutorun,)
+		records = append(records, newAutorun)
 	}
 
 	return
@@ -207,7 +208,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 		// Loop through all files in folder.
 		for _, fileEntry := range filesList {
 			// We skip desktop.ini files.
-			if file.Name() == "desktop.ini" {
+			if fileEntry.Name() == "desktop.ini" {
 				continue
 			}
 
@@ -217,7 +218,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 			newAutorun := stringToAutorun("startup", startupPath, filePath, false)
 
 			// Add new record to list.
-			records = append(records, newAutorun,)
+			records = append(records, newAutorun)
 		}
 	}
 
