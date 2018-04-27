@@ -42,7 +42,7 @@ func parsePath(entryValue string) ([]string, error) {
 	return args, nil
 }
 
-func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool) *Autorun {
+func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool, entry string) *Autorun {
 	var imagePath = entryValue
 	var argsString = ""
 
@@ -73,6 +73,7 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 		MD5:       md5,
 		SHA1:      sha1,
 		SHA256:    sha256,
+		Entry:     entry,
 	}
 
 	return &newAutorun
@@ -128,7 +129,7 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 				imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), keyName)
 
 				// We pass the value string to a function to return an Autorun.
-				newAutorun := stringToAutorun("run_key", imageLocation, value, true)
+				newAutorun := stringToAutorun("run_key", imageLocation, value, true, name)
 
 				// Add the new autorun to the records.
 				records = append(records, newAutorun)
@@ -174,7 +175,7 @@ func windowsGetServices() (records []*Autorun) {
 		imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), subkeyPath)
 
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", imageLocation, imagePath, true)
+		newAutorun := stringToAutorun("service", imageLocation, imagePath, true, "")
 
 		// Add the new autorun to the records.
 		records = append(records, newAutorun)
@@ -215,7 +216,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 			filePath := filepath.Join(startupPath, fileEntry.Name())
 
 			// Instantiate new autorun record.
-			newAutorun := stringToAutorun("startup", startupPath, filePath, false)
+			newAutorun := stringToAutorun("startup", startupPath, filePath, false, "")
 
 			// Add new record to list.
 			records = append(records, newAutorun)
