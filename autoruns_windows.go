@@ -68,6 +68,7 @@ func parsePath(entryValue string) ([]string, error) {
 
 func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool, entry string) *Autorun {
 	var imagePath = entryValue
+	var launchString = entryValue
 	var argsString = ""
 
 	// TODO: This optional parsing is quite spaghetti. To change.
@@ -89,15 +90,16 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 	sha256, _ := files.HashFile(imagePath, "sha256")
 
 	newAutorun := Autorun{
-		Type:      entryType,
-		Location:  entryLocation,
-		ImagePath: imagePath,
-		ImageName: filepath.Base(imagePath),
-		Arguments: argsString,
-		MD5:       md5,
-		SHA1:      sha1,
-		SHA256:    sha256,
-		Entry:     entry,
+		Type:         entryType,
+		Location:     entryLocation,
+		ImagePath:    imagePath,
+		ImageName:    filepath.Base(imagePath),
+		Arguments:    argsString,
+		MD5:          md5,
+		SHA1:         sha1,
+		SHA256:       sha256,
+		Entry:        entry,
+		LaunchString: launchString,
 	}
 
 	return &newAutorun
