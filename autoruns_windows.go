@@ -1,14 +1,17 @@
 package autoruns
 
 import (
-	"os"
+	"errors"
 	"fmt"
-	"strings"
 	"io/ioutil"
+	"os"
+	"os/exec"
 	"path/filepath"
-	"golang.org/x/sys/windows/registry"
+	"strings"
+
+	files "github.com/botherder/go-files"
 	"github.com/mattn/go-shellwords"
-	"github.com/botherder/go-files"
+	"golang.org/x/sys/windows/registry"
 )
 
 // Just return a string value for a given registry root Key.
@@ -23,26 +26,49 @@ func registryToString(reg registry.Key) string {
 }
 
 func parsePath(entryValue string) ([]string, error) {
-	// We expand environment variables.
-	entryValue = files.ExpandWindows(entryValue)
-
+	if entryValue == "" {
+		return nil, errors.New("empty path")
+	}
+	if strings.HasPrefix(entryValue, `\??\`) {
+		entryValue = entryValue[4:]
+	}
+	// do some typical replacements
+	if len(entryValue) >= 11 && strings.ToLower(entryValue[:11]) == "\\systemroot" {
+		entryValue = strings.Replace(entryValue, entryValue[:11], os.Getenv("SystemRoot"), -1)
+	}
+	if len(entryValue) >= 8 && strings.ToLower(entryValue[:8]) == "system32" {
+		entryValue = strings.Replace(entryValue, entryValue[:8], fmt.Sprintf("%s\\System32", os.Getenv("SystemRoot")), -1)
+	}
+	// replace environment variables
+	entryValue, err := registry.ExpandString(entryValue)
+	if err != nil {
+		return []string{}, err
+	}
 	// We clean the path for proper backslashes.
 	entryValue = strings.Replace(entryValue, "\\", "\\\\", -1)
-
-	// Parse the value to separate path with arguments.
-	// TODO: this is super spaghetti and doesn't actually always work. Fix please.
+	// Check if the whole entry is an executable and clean the file path.
+	if v, err := cleanPath(entryValue); err == nil {
+		return []string{v}, nil
+	}
+	// Otherwise we can split the entry for executable and arguments
 	parser := shellwords.NewParser()
-	parser.ParseEnv = true
 	args, err := parser.Parse(entryValue)
 	if err != nil {
 		return []string{}, err
 	}
-
+	// If the split worked, find the correct path to the executable and clean
+	// the file path.
+	if len(args) > 0 {
+		if v, err := cleanPath(args[0]); err == nil {
+			args[0] = v
+		}
+	}
 	return args, nil
 }
 
-func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool) *Autorun {
+func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool, entry string) *Autorun {
 	var imagePath = entryValue
+	var launchString = entryValue
 	var argsString = ""
 
 	// TODO: This optional parsing is quite spaghetti. To change.
@@ -64,14 +90,16 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 	sha256, _ := files.HashFile(imagePath, "sha256")
 
 	newAutorun := Autorun{
-		Type: entryType,
-		Location: entryLocation,
-		ImagePath: imagePath,
-		ImageName: filepath.Base(imagePath),
-		Arguments: argsString,
-		MD5: md5,
-		SHA1: sha1,
-		SHA256: sha256,
+		Type:         entryType,
+		Location:     entryLocation,
+		ImagePath:    imagePath,
+		ImageName:    filepath.Base(imagePath),
+		Arguments:    argsString,
+		MD5:          md5,
+		SHA1:         sha1,
+		SHA256:       sha256,
+		Entry:        entry,
+		LaunchString: launchString,
 	}
 
 	return &newAutorun
@@ -110,6 +138,7 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 			if err != nil {
 				continue
 			}
+			defer key.Close()
 
 			// Enumerate value names.
 			names, err := key.ReadValueNames(0)
@@ -120,17 +149,17 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 			for _, name := range names {
 				// For each entry we get the string value.
 				value, _, err := key.GetStringValue(name)
-				if err != nil {
+				if err != nil || value == "" {
 					continue
 				}
 
 				imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), keyName)
 
 				// We pass the value string to a function to return an Autorun.
-				newAutorun := stringToAutorun("run_key", imageLocation,  value, true)
+				newAutorun := stringToAutorun("run_key", imageLocation, value, true, name)
 
 				// Add the new autorun to the records.
-				records = append(records, newAutorun,)
+				records = append(records, newAutorun)
 			}
 		}
 	}
@@ -148,6 +177,7 @@ func windowsGetServices() (records []*Autorun) {
 	if err != nil {
 		return
 	}
+	defer key.Close()
 
 	// Enumerate subkeys.
 	names, err := key.ReadSubKeyNames(0)
@@ -162,6 +192,7 @@ func windowsGetServices() (records []*Autorun) {
 		if err != nil {
 			continue
 		}
+		defer subkey.Close()
 
 		// Check if there is an ImagePath value.
 		imagePath, _, err := subkey.GetStringValue("ImagePath")
@@ -173,10 +204,10 @@ func windowsGetServices() (records []*Autorun) {
 		imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), subkeyPath)
 
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", imageLocation, imagePath, true)
+		newAutorun := stringToAutorun("service", imageLocation, imagePath, true, "")
 
 		// Add the new autorun to the records.
-		records = append(records, newAutorun,)
+		records = append(records, newAutorun)
 	}
 
 	return
@@ -207,21 +238,31 @@ func windowsGetStartupFiles() (records []*Autorun) {
 		// Loop through all files in folder.
 		for _, fileEntry := range filesList {
 			// We skip desktop.ini files.
-			if file.Name() == "desktop.ini" {
+			if fileEntry.Name() == "desktop.ini" {
 				continue
 			}
 
 			filePath := filepath.Join(startupPath, fileEntry.Name())
 
 			// Instantiate new autorun record.
-			newAutorun := stringToAutorun("startup", startupPath, filePath, false)
+			newAutorun := stringToAutorun("startup", startupPath, filePath, false, "")
 
 			// Add new record to list.
-			records = append(records, newAutorun,)
+			records = append(records, newAutorun)
 		}
 	}
 
 	return
+}
+
+// cleanPath uses lookPath to search for the correct path to
+// the executable and cleans the file path.
+func cleanPath(file string) (string, error) {
+	file, err := exec.LookPath(file)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Clean(file), nil
 }
 
 // func windowsGetTasks() {
