@@ -138,11 +138,11 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 			if err != nil {
 				continue
 			}
-			defer key.Close()
 
 			// Enumerate value names.
 			names, err := key.ReadValueNames(0)
 			if err != nil {
+				key.Close()
 				continue
 			}
 
@@ -161,6 +161,7 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 				// Add the new autorun to the records.
 				records = append(records, newAutorun)
 			}
+			key.Close()
 		}
 	}
 
@@ -177,10 +178,10 @@ func windowsGetServices() (records []*Autorun) {
 	if err != nil {
 		return
 	}
-	defer key.Close()
 
 	// Enumerate subkeys.
 	names, err := key.ReadSubKeyNames(0)
+	key.Close()
 	if err != nil {
 		return
 	}
@@ -192,10 +193,10 @@ func windowsGetServices() (records []*Autorun) {
 		if err != nil {
 			continue
 		}
-		defer subkey.Close()
 
 		// Check if there is an ImagePath value.
 		imagePath, _, err := subkey.GetStringValue("ImagePath")
+		subkey.Close()
 		// If not, we skip to the next one.
 		if err != nil {
 			continue
