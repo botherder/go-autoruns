@@ -1,18 +1,19 @@
 package autoruns
 
 import (
-	"os"
-	"strings"
 	"io/ioutil"
+	"os"
 	"path/filepath"
-	"howett.net/plist"
+	"strings"
+
 	"github.com/botherder/go-files"
+	"howett.net/plist"
 )
 
 type Plist struct {
-	Label string `plist:"Label"`
+	Label            string   `plist:"Label"`
 	ProgramArguments []string `plist:"ProgramArguments"`
-	RunAtLoad bool `plist:"RunAtLoad"`
+	RunAtLoad        bool     `plist:"RunAtLoad"`
 }
 
 func parsePlists(entryType string, folders []string) (records []*Autorun) {
@@ -36,12 +37,12 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 			if err != nil {
 				continue
 			}
-			defer reader.Close()
 
 			// Parse the plist file.
 			var p Plist
 			decoder := plist.NewDecoder(reader)
 			err = decoder.Decode(&p)
+			reader.Close()
 			if err != nil {
 				continue
 			}
@@ -66,18 +67,22 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 			sha256, _ := files.HashFile(imagePath, "sha256")
 
 			newAutorun := Autorun{
-				Type: entryType,
-				Location: filePath,
-				ImagePath: imagePath,
-				ImageName: filepath.Base(imagePath),
-				Arguments: arguments,
-				MD5: md5,
-				SHA1: sha1,
-				SHA256: sha256,
+				Type:         entryType,
+				Location:     filePath,
+				ImagePath:    imagePath,
+				ImageName:    filepath.Base(imagePath),
+				Arguments:    arguments,
+				MD5:          md5,
+				SHA1:         sha1,
+				SHA256:       sha256,
+				LaunchString: imagePath,
+			}
+			if arguments != "" {
+				newAutorun.LaunchString += " " + arguments
 			}
 
 			// Add new record to list.
-			records = append(records, &newAutorun,)
+			records = append(records, &newAutorun)
 		}
 	}
 
