@@ -52,12 +52,12 @@ func stringToAutorun(fileName string) (*Autorun, error) {
 			inSection = line
 		}
 
-		switch {
-		case inSection == "[Service]":
+		switch inSection {
+		case "[Service]":
 			if strings.HasPrefix(line, "ExecStart=") {
 				parseShellInvocation(line, &autorun)
 			}
-		case inSection == "[D-BUS Service]":
+		case "[D-BUS Service]":
 			if strings.HasPrefix(line, "Exec=") {
 				parseShellInvocation(line, &autorun)
 			}
