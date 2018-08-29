@@ -1,13 +1,13 @@
 package autoruns
 
 import (
-	"os"
-	"strings"
 	"io/ioutil"
+	"os"
 	"path/filepath"
+	"strings"
 
-	"howett.net/plist"
 	"github.com/botherder/go-files"
+	"howett.net/plist"
 )
 
 type Plist struct {

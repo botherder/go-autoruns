@@ -1,13 +1,13 @@
 package autoruns
 
 import (
+	"bufio"
+	"io/ioutil"
 	"os"
 	"path"
-	"bufio"
+	"path/filepath"
 	"regexp"
 	"strings"
-	"io/ioutil"
-	"path/filepath"
 
 	files "github.com/botherder/go-files"
 )
@@ -70,7 +70,6 @@ func stringToAutorun(fileName string) (*Autorun, error) {
 
 	return &autorun, nil
 }
-
 
 func linuxGetSystemd() (records []*Autorun) {
 	folders := []string{
