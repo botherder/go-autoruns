@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var enabledServices *[]string
+var enabledServices []string
 
 func parseRCConf() {
 	file, err := os.Open("/etc/rc.conf")
@@ -54,7 +54,8 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 
 	// Loop through all files in folder.
 	for _, fileEntry := range filesList {
-		file, err := os.Open(fileEntry)
+		filePath := filepath.Join(folder, fileEntry.Name())
+		file, err := os.Open(filePath)
 		if err != nil {
 			continue
 		}
@@ -64,7 +65,7 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 		for scanner.Scan() {
 			line := scanner.Text()
 			line = strings.TrimSpace(line)
-			line = strings.Replace("\"", "")
+			line = strings.Replace(line, "\"", "")
 			name := rxp.FindString(line)
 			if name == "" {
 				continue
@@ -72,13 +73,15 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 
 			newAutorun := Autorun{
 				Type:      entryType,
-				Location:  fileEntry,
+				Location:  filePath,
 				ImageName: name,
 			}
 
 			records = append(records, &newAutorun)
 		}
 	}
+
+	return
 }
 
 func getAutoruns() (records []*Autorun) {
