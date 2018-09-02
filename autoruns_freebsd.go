@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -65,7 +66,7 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 		for scanner.Scan() {
 			line := scanner.Text()
 			line = strings.TrimSpace(line)
-			line = strings.Replace(line, "\"", "")
+			line = strings.Replace(line, "\"", "", -1)
 			name := rxp.FindString(line)
 			if name == "" {
 				continue
