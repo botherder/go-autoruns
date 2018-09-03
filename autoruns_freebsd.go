@@ -18,7 +18,7 @@ func parseRCConf() {
 	}
 	defer file.Close()
 
-	rxp, err := regexp.Compile("^(\\w+)_enabled=\"YES\"$")
+	rxp, err := regexp.Compile("^(\\w+)_enable=\"YES\"$")
 	if err != nil {
 		return
 	}
