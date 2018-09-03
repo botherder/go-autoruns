@@ -26,12 +26,17 @@ func parseRCConf() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		match := rxp.FindString(line)
-		if match == "" {
+		line = strings.TrimSpace(line)
+		matches := rxp.FindStringSubmatch(line)
+		if len(matches) < 2 {
+			continue
+		}
+		serviceName := matches[1]
+		if serviceName == "" {
 			continue
 		}
 
-		enabledServices = append(enabledServices, match)
+		enabledServices = append(enabledServices, serviceName)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -67,17 +72,21 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 			line := scanner.Text()
 			line = strings.TrimSpace(line)
 			line = strings.Replace(line, "\"", "", -1)
-			name := rxp.FindString(line)
-			if name == "" {
+			matches := rxp.FindStringSubmatch(line)
+			if len(matches) < 2 {
+				continue
+			}
+			serviceName := matches[1]
+			if serviceName == "" {
 				continue
 			}
 
 			for _, enabled := range enabledServices {
-				if enabled == name {
+				if enabled == serviceName {
 					newAutorun := Autorun{
 						Type:      entryType,
 						Location:  filePath,
-						ImageName: name,
+						ImageName: serviceName,
 					}
 
 					records = append(records, &newAutorun)
