@@ -72,13 +72,18 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 				continue
 			}
 
-			newAutorun := Autorun{
-				Type:      entryType,
-				Location:  filePath,
-				ImageName: name,
-			}
+			for _, enabled := range enabledServices {
+				if enabled == name {
+					newAutorun := Autorun{
+						Type:      entryType,
+						Location:  filePath,
+						ImageName: name,
+					}
 
-			records = append(records, &newAutorun)
+					records = append(records, &newAutorun)
+					break
+				}
+			}
 		}
 	}
 

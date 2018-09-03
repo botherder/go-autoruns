@@ -1,6 +1,8 @@
 # go-autoruns
 
 Collect records of programs registered for persistence on the running system.
+It currently supports Linux, Mac, Windows and FreeBSD. The coverage on the different platforms may vary.
+Contributions for extended support are very welcome.
 
 ## Usage
 
@@ -56,6 +58,4 @@ func main() {
 
 ## TODO
 
-- Extend support for other autorun records on Windows.
-- Extend support for other autorun records on Mac.
-- Add support for Linux.
+- Extend support for other autorun records on all platforms.
