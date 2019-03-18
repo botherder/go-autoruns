@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/DHowett/go-plist"
 	"github.com/botherder/go-files"
+	"howett.net/plist"
 )
 
 type Plist struct {
