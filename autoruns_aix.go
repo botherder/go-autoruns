@@ -1,4 +1,4 @@
-//+build linux
+//+build aix
 
 package autoruns
 
