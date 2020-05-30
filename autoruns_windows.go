@@ -12,6 +12,7 @@ import (
 	files "github.com/botherder/go-files"
 	"github.com/mattn/go-shellwords"
 	"golang.org/x/sys/windows/registry"
+	"github.com/capnspacehook/taskmaster"
 )
 
 // Just return a string value for a given registry root Key.
@@ -23,6 +24,16 @@ func registryToString(reg registry.Key) string {
 	} else {
 		return ""
 	}
+}
+
+// cleanPath uses lookPath to search for the correct path to
+// the executable and cleans the file path.
+func cleanPath(file string) (string, error) {
+	file, err := exec.LookPath(file)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Clean(file), nil
 }
 
 func parsePath(entryValue string) ([]string, error) {
@@ -110,7 +121,7 @@ func getAutoruns() (records []*Autorun) {
 	records = append(records, windowsGetCurrentVersionRun()...)
 	records = append(records, windowsGetServices()...)
 	records = append(records, windowsGetStartupFiles()...)
-	// records = append(records, windowsGetTasks()...)
+	records = append(records, windowsGetTasks()...)
 
 	return
 }
@@ -256,16 +267,27 @@ func windowsGetStartupFiles() (records []*Autorun) {
 	return
 }
 
-// cleanPath uses lookPath to search for the correct path to
-// the executable and cleans the file path.
-func cleanPath(file string) (string, error) {
-	file, err := exec.LookPath(file)
+// Extract scheduled tasks that trigger command launches.
+func windowsGetTasks() (records []*Autorun) {
+	taskService, err := taskmaster.Connect("", "", "", "")
 	if err != nil {
-		return "", err
+		return
 	}
-	return filepath.Clean(file), nil
+	defer taskService.Disconnect()
+
+	tasks, err := taskService.GetRegisteredTasks()
+	if err != nil {
+		return
+	}
+
+	for _, task := range tasks {
+		for _, action := range task.Definition.Actions {
+			if action.GetType() == taskmaster.TASK_ACTION_EXEC {
+				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, true, "")
+				records = append(records, newAutorun)
+			}
+		}
+	}
+
+	return
 }
-
-// func windowsGetTasks() {
-
-// }
