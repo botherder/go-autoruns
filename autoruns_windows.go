@@ -283,7 +283,7 @@ func windowsGetTasks() (records []*Autorun) {
 	for _, task := range tasks {
 		for _, action := range task.Definition.Actions {
 			if action.GetType() == taskmaster.TASK_ACTION_EXEC {
-				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, true, "")
+				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, true, task.Name)
 				records = append(records, newAutorun)
 			}
 		}
