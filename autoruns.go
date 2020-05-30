@@ -1,5 +1,7 @@
 package autoruns
 
+// Autorun contains the details of a program or command found to be launching
+// automatically on start-up of the operating system.
 type Autorun struct {
 	Type         string `json:"type"`
 	Location     string `json:"location"`
@@ -13,6 +15,7 @@ type Autorun struct {
 	LaunchString string `json:"launch_string"`
 }
 
+// Autoruns returns a list of Autorun items.
 func Autoruns() []*Autorun {
 	return getAutoruns()
 }
