@@ -10,18 +10,19 @@ import (
 	"strings"
 
 	files "github.com/botherder/go-files"
+	"github.com/capnspacehook/taskmaster"
 	"github.com/mattn/go-shellwords"
 	"golang.org/x/sys/windows/registry"
-	"github.com/capnspacehook/taskmaster"
 )
 
 // Just return a string value for a given registry root Key.
 func registryToString(reg registry.Key) string {
-	if reg == registry.LOCAL_MACHINE {
+	switch (reg) {
+	case registry.LOCAL_MACHINE:
 		return "LOCAL_MACHINE"
-	} else if reg == registry.CURRENT_USER {
+	case registry.CURRENT_USER:
 		return "CURRENT_USER"
-	} else {
+	default:
 		return ""
 	}
 }
