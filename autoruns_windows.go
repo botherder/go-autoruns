@@ -44,14 +44,14 @@ func parsePath(entryValue string) ([]string, error) {
 	if strings.HasPrefix(entryValue, `\??\`) {
 		entryValue = entryValue[4:]
 	}
-	// do some typical replacements
+	// Do some typical replacements.
 	if len(entryValue) >= 11 && strings.ToLower(entryValue[:11]) == "\\systemroot" {
 		entryValue = strings.Replace(entryValue, entryValue[:11], os.Getenv("SystemRoot"), -1)
 	}
 	if len(entryValue) >= 8 && strings.ToLower(entryValue[:8]) == "system32" {
 		entryValue = strings.Replace(entryValue, entryValue[:8], fmt.Sprintf("%s\\System32", os.Getenv("SystemRoot")), -1)
 	}
-	// replace environment variables
+	// Replace environment variables.
 	entryValue, err := registry.ExpandString(entryValue)
 	if err != nil {
 		return []string{}, err
