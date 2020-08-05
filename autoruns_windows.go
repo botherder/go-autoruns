@@ -268,7 +268,7 @@ func windowsGetStartupFiles() (records []*Autorun) {
 
 // Extract scheduled tasks that trigger command launches.
 func windowsGetTasks() (records []*Autorun) {
-	taskService, err := taskmaster.Connect("", "", "", "")
+	taskService, err := taskmaster.Connect()
 	if err != nil {
 		return
 	}
