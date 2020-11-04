@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -15,6 +16,10 @@ import (
 // This function just invokes all the platform-dependant functions.
 func getAutoruns() (records []*Autorun) {
 	records = append(records, linuxGetSystemd()...)
+	records = append(records, linuxGetBashScripts()...)
+	records = append(records, getCronFiles()...)
+	records = append(records, getCronDFiles()...)
+
 	return
 }
 
@@ -107,4 +112,65 @@ func linuxGetSystemd() (records []*Autorun) {
 	}
 
 	return
+}
+
+/*
+Parse crontab entries for every user and list autorun commands
+*/
+func getCronFiles() (records []*Autorun) {
+	usernames := getUsers(false)
+	for _, user := range usernames {
+		args := []string{"-u", user, "-l"}
+		result, err := exec.Command("/usr/bin/crontab", args...).Output()
+		if err == nil {
+			for _, line := range strings.Split(string(result), "\n") {
+				command := getCronCommand(line, usernames)
+				autorun := Autorun{
+					Location: "crontab " + user,
+					Type:     "cron",
+				}
+				records = parseBashCommand(command, autorun)
+			}
+		}
+	}
+	return records
+}
+
+/*
+Parse all crond files and list autorun commands
+*/
+func getCronDFiles() (records []*Autorun) {
+	cronFolders := []string{
+		"/etc/cron.d",
+		"/etc/cron.daily",
+		"/etc/cron.hourly",
+		"/etc/cron.monthly",
+		"/etc/cron.weekly",
+	}
+
+	for _, cronFolder := range cronFolders {
+		// Get list of files in folder.
+		filesList, err := ioutil.ReadDir(cronFolder)
+		if err != nil {
+			continue
+		}
+
+		// Loop through all files in folder.
+		for _, fileEntry := range filesList {
+			filename := filepath.Join(cronFolder, fileEntry.Name())
+			records = append(records, parseCronDFile(filename)...)
+		}
+	}
+	return records
+}
+
+/*
+Parse all interesting bash files and list autorun commands
+*/
+func linuxGetBashScripts() (records []*Autorun) {
+	bashFiles := getBashFiles()
+	for _, bashFile := range bashFiles {
+		records = append(records, parseBashFile(bashFile)...)
+	}
+	return records
 }
