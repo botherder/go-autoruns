@@ -111,7 +111,7 @@ func WindowsGetServices() (records []*Autorun) {
 
 		imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), subkeyPath)
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", imageLocation, imagePath, "",  true)
+		newAutorun := stringToAutorun("service", imageLocation, imagePath, "", true)
 		// Add the new autorun to the records.
 		records = append(records, newAutorun)
 	}
