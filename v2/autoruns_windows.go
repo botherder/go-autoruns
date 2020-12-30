@@ -64,7 +64,7 @@ func WindowsGetCurrentVersionRun() (records []*Autorun) {
 
 				imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), keyName)
 				// We pass the value string to a function to return an Autorun.
-				newAutorun := stringToAutorun("run_key", imageLocation, value, true, name)
+				newAutorun := stringToAutorun("run_key", imageLocation, value, name, true)
 				// Add the new autorun to the records.
 				records = append(records, newAutorun)
 			}
@@ -111,7 +111,7 @@ func WindowsGetServices() (records []*Autorun) {
 
 		imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), subkeyPath)
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", imageLocation, imagePath, true, "")
+		newAutorun := stringToAutorun("service", imageLocation, imagePath, "",  true)
 		// Add the new autorun to the records.
 		records = append(records, newAutorun)
 	}
@@ -150,7 +150,7 @@ func WindowsGetStartupFiles() (records []*Autorun) {
 
 			filePath := filepath.Join(startupPath, fileEntry.Name())
 			// Instantiate new autorun record.
-			newAutorun := stringToAutorun("startup", startupPath, filePath, false, "")
+			newAutorun := stringToAutorun("startup", startupPath, filePath, "", false)
 			// Add new record to list.
 			records = append(records, newAutorun)
 		}
@@ -175,7 +175,7 @@ func WindowsGetTasks() (records []*Autorun) {
 	for _, task := range tasks {
 		for _, action := range task.Definition.Actions {
 			if action.GetType() == taskmaster.TASK_ACTION_EXEC {
-				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, true, task.Name)
+				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, task.Name, true)
 				records = append(records, newAutorun)
 			}
 		}
