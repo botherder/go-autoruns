@@ -86,7 +86,7 @@ func parsePath(entryValue string) ([]string, error) {
 	return args, nil
 }
 
-func stringToAutorun(entryType, entryLocation, entryValue string, toParse bool, entry string) *Autorun {
+func stringToAutorun(entryType, entryLocation, entryValue, entry string, toParse bool) *Autorun {
 	var imagePath = entryValue
 	var launchString = entryValue
 	var argsString = ""
