@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -16,38 +15,29 @@ import (
 	"github.com/botherder/go-savetime/hashes"
 )
 
+const (
+	LINUX_ENTRY_SYSTEMD = "systemd"
+)
+
 // This function just invokes all the platform-dependant functions.
-func getAutoruns() (records []*Autorun) {
-	records = append(records, linuxGetSystemd()...)
+func GetAllAutoruns() (records []*Autorun) {
+	records = append(records, LinuxGetSystemd()...)
 	return
 }
 
-var regexSection = regexp.MustCompile("\\[.*\\]")
-
-func parseShellInvocation(shellLine string, autorun *Autorun) {
-	autorun.LaunchString = strings.SplitAfter(shellLine, "=")[1]
-	// We need to make sure to drop !! from paths
-	autorun.ImagePath = strings.Replace(strings.Split(autorun.LaunchString, " ")[0], "!!", "", -1)
-	autorun.ImageName = path.Base(autorun.ImagePath)
-
-	args := strings.Split(autorun.LaunchString, " ")
-	if len(args) > 1 {
-		autorun.Arguments = strings.Join(args[1:], " ")
-	}
-}
-
-func stringToAutorun(fileName string) (*Autorun, error) {
-	reader, err := os.Open(fileName)
+func systemdToAutorun(servicePath string) (*Autorun, error) {
+	reader, err := os.Open(servicePath)
 	if err != nil {
 		return nil, err
 	}
 	defer reader.Close()
 
 	autorun := Autorun{
-		Location: fileName,
-		Type:     "systemd",
+		Location: servicePath,
+		Type:     LINUX_ENTRY_SYSTEMD,
 	}
 
+	regexSection := regexp.MustCompile("\\[.*\\]")
 	inSection := ""
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
@@ -75,7 +65,7 @@ func stringToAutorun(fileName string) (*Autorun, error) {
 	return &autorun, nil
 }
 
-func linuxGetSystemd() (records []*Autorun) {
+func LinuxGetSystemd() (records []*Autorun) {
 	folders := []string{
 		"/etc/systemd/system/",
 		"/usr/share/dbus-1/system-services/",
@@ -101,7 +91,7 @@ func linuxGetSystemd() (records []*Autorun) {
 			}
 
 			filePath := filepath.Join(folder, fileEntry.Name())
-			record, err := stringToAutorun(filePath)
+			record, err := systemdToAutorun(filePath)
 			if err != nil {
 				continue
 			}

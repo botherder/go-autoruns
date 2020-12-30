@@ -103,7 +103,7 @@ func parseRCScripts(entryType, folder string) (records []*Autorun) {
 	return
 }
 
-func getAutoruns() (records []*Autorun) {
+func GetAllAutoruns() (records []*Autorun) {
 	parseRCConf()
 
 	records = append(records, parseRCScripts("rc.d", "/etc/rc.d/")...)

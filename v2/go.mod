@@ -1,4 +1,4 @@
-module github.com/botherder/go-autoruns
+module github.com/botherder/go-autoruns/v2
 
 go 1.15
 

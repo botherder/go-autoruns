@@ -94,7 +94,7 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 }
 
 // This function just invokes all the platform-dependant functions.
-func getAutoruns() (records []*Autorun) {
+func GetAllAutoruns() (records []*Autorun) {
 	// Startup and run as root.
 	launchDaemons := []string{
 		"/Library/LaunchDaemons",

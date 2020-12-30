@@ -18,8 +18,3 @@ type Autorun struct {
 	Entry        string `json:"entry"`
 	LaunchString string `json:"launch_string"`
 }
-
-// Autoruns returns a list of Autorun items.
-func Autoruns() []*Autorun {
-	return getAutoruns()
-}
