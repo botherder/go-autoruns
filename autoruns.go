@@ -1,3 +1,7 @@
+// This file is part of go-autoruns.
+// Copyright (c) 2018-2021 Claudio Guarnieri
+// See the file 'LICENSE' for copying permission.
+
 package autoruns
 
 // Autorun contains the details of a program or command found to be launching

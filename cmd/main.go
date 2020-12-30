@@ -1,8 +1,8 @@
 package main
 
 import (
-	autoruns ".."
 	"fmt"
+	"github.com/botherder/go-autoruns"
 )
 
 func main() {

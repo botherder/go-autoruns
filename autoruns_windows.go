@@ -1,3 +1,7 @@
+// This file is part of go-autoruns.
+// Copyright (c) 2018-2021 Claudio Guarnieri
+// See the file 'LICENSE' for copying permission.
+
 package autoruns
 
 import (
@@ -9,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	files "github.com/botherder/go-files"
+	"github.com/botherder/go-savetime/hashes"
 	"github.com/capnspacehook/taskmaster"
 	"github.com/mattn/go-shellwords"
 	"golang.org/x/sys/windows/registry"
@@ -101,9 +105,9 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 		}
 	}
 
-	md5, _ := files.HashFile(imagePath, "md5")
-	sha1, _ := files.HashFile(imagePath, "sha1")
-	sha256, _ := files.HashFile(imagePath, "sha256")
+	md5, _ := hashes.FileMD5(imagePath)
+	sha1, _ := hashes.FileSHA1(imagePath)
+	sha256, _ := hashes.FileSHA256(imagePath)
 
 	newAutorun := Autorun{
 		Type:         entryType,

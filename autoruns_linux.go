@@ -1,3 +1,7 @@
+// This file is part of go-autoruns.
+// Copyright (c) 2018-2021 Claudio Guarnieri
+// See the file 'LICENSE' for copying permission.
+
 package autoruns
 
 import (
@@ -9,7 +13,7 @@ import (
 	"regexp"
 	"strings"
 
-	files "github.com/botherder/go-files"
+	"github.com/botherder/go-savetime/hashes"
 )
 
 // This function just invokes all the platform-dependant functions.
@@ -64,9 +68,9 @@ func stringToAutorun(fileName string) (*Autorun, error) {
 		}
 	}
 
-	autorun.MD5, _ = files.HashFile(autorun.ImagePath, "md5")
-	autorun.SHA1, _ = files.HashFile(autorun.ImagePath, "sha1")
-	autorun.SHA256, _ = files.HashFile(autorun.ImagePath, "sha256")
+	autorun.MD5, _ = hashes.FileMD5(autorun.ImagePath)
+	autorun.SHA1, _ = hashes.FileSHA1(autorun.ImagePath)
+	autorun.SHA256, _ = hashes.FileSHA256(autorun.ImagePath)
 
 	return &autorun, nil
 }
