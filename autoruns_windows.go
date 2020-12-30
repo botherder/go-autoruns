@@ -17,7 +17,7 @@ import (
 
 // Just return a string value for a given registry root Key.
 func registryToString(reg registry.Key) string {
-	switch (reg) {
+	switch reg {
 	case registry.LOCAL_MACHINE:
 		return "LOCAL_MACHINE"
 	case registry.CURRENT_USER:
