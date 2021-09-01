@@ -16,6 +16,7 @@ import (
 
 type Plist struct {
 	Label            string   `plist:"Label"`
+	Program          string   `plist:"Program"`
 	ProgramArguments []string `plist:"ProgramArguments"`
 	RunAtLoad        bool     `plist:"RunAtLoad"`
 }
@@ -51,7 +52,7 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 				continue
 			}
 
-			if len(p.ProgramArguments) == 0 {
+			if len(p.ProgramArguments) == 0 && len(p.Program) == 0 {
 				continue
 			}
 
@@ -60,7 +61,13 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 				continue
 			}
 
-			imagePath := p.ProgramArguments[0]
+			imagePath := ""
+			if p.Program != "" {
+				imagePath = p.Program
+			} else {
+				imagePath = p.ProgramArguments[0]
+			}
+
 			arguments := ""
 			if len(p.ProgramArguments) > 1 {
 				arguments = strings.Join(p.ProgramArguments[1:], " ")
