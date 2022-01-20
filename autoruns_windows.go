@@ -11,8 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	files "github.com/botherder/go-files"
-	"github.com/mattn/go-shellwords"
+	"github.com/botherder/go-files"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -27,14 +26,14 @@ func registryToString(reg registry.Key) string {
 	}
 }
 
-func parsePath(entryValue string) ([]string, error) {
+func parsePath(entryValue string) (string, string, error) {
 	if entryValue == "" {
-		return nil, errors.New("empty path")
+		return "", "", errors.New("empty path")
 	}
+	// do some replacements to convert typical kernel paths to user paths
 	if strings.HasPrefix(entryValue, `\??\`) {
 		entryValue = entryValue[4:]
 	}
-	// do some typical replacements
 	if len(entryValue) >= 11 && strings.ToLower(entryValue[:11]) == "\\systemroot" {
 		entryValue = strings.Replace(entryValue, entryValue[:11], os.Getenv("SystemRoot"), -1)
 	}
@@ -44,28 +43,56 @@ func parsePath(entryValue string) ([]string, error) {
 	// replace environment variables
 	entryValue, err := registry.ExpandString(entryValue)
 	if err != nil {
-		return []string{}, err
+		return "", "", err
 	}
-	// We clean the path for proper backslashes.
-	entryValue = strings.Replace(entryValue, "\\", "\\\\", -1)
-	// Check if the whole entry is an executable and clean the file path.
-	if v, err := cleanPath(entryValue); err == nil {
-		return []string{v}, nil
-	}
-	// Otherwise we can split the entry for executable and arguments
-	parser := shellwords.NewParser()
-	args, err := parser.Parse(entryValue)
-	if err != nil {
-		return []string{}, err
-	}
-	// If the split worked, find the correct path to the executable and clean
-	// the file path.
-	if len(args) > 0 {
-		if v, err := cleanPath(args[0]); err == nil {
-			args[0] = v
+
+	// Now find the executable, analogous to how CreateProcess works
+	var executable string
+	var arguments string
+	if strings.HasPrefix(entryValue, "\"") {
+		// Quoted executable - look for closing quote
+		closingQuote := strings.Index(entryValue[1:], "\"")
+		if closingQuote < 0 {
+			return "", "", errors.New("unclosed quote")
+		}
+		executable = entryValue[1 : closingQuote+1]
+		arguments = entryValue[closingQuote+2:]
+	} else {
+		// Unquoted executable. Try to look for first word first and then extend the path if that fails, e.g.:
+		// For C:\Program Files\My Application\app.exe some args, first search for:
+		// C:\Program
+		// if that fails, look for:
+		// C:\Program Files\My
+		// And if that still fails, look for:
+		// C:\Program Files\My Application\app.exe
+		// ...
+		var spaceIndex int
+		for {
+			if spaceIndex == len(entryValue) {
+				// Could not find file
+				return "", "", errors.New("executable not found")
+			}
+			if nextSpace := strings.IndexAny(entryValue[spaceIndex+1:], " \t"); nextSpace < 0 {
+				spaceIndex = len(entryValue)
+			} else {
+				spaceIndex += nextSpace + 1
+			}
+			possibleExecutable := entryValue[:spaceIndex]
+			if exePath, err := exec.LookPath(possibleExecutable); err == nil {
+				executable = exePath
+				if spaceIndex < len(entryValue) {
+					arguments = entryValue[spaceIndex+1:]
+				}
+				break
+			}
 		}
 	}
-	return args, nil
+
+	arguments = strings.TrimSpace(arguments)
+	if v, err := cleanPath(executable); err == nil {
+		executable = v
+	}
+	return executable, arguments, nil
 }
 
 func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool, entry string) *Autorun {
@@ -73,17 +100,11 @@ func stringToAutorun(entryType string, entryLocation string, entryValue string, 
 	var launchString = entryValue
 	var argsString = ""
 
-	// TODO: This optional parsing is quite spaghetti. To change.
-	if toParse == true {
-		args, err := parsePath(entryValue)
-
+	if toParse {
+		executable, args, err := parsePath(entryValue)
 		if err == nil {
-			if len(args) > 0 {
-				imagePath = args[0]
-				if len(args) > 1 {
-					argsString = strings.Join(args[1:], " ")
-				}
-			}
+			imagePath = executable
+			argsString = args
 		}
 	}
 
