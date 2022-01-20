@@ -1,145 +1,32 @@
 //+build windows
+// This file is part of go-autoruns.
+// Copyright (c) 2018-2021 Claudio Guarnieri
+// See the file 'LICENSE' for copying permission.
 
 package autoruns
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
-	"github.com/botherder/go-files"
+	"github.com/capnspacehook/taskmaster"
 	"golang.org/x/sys/windows/registry"
 )
 
-// Just return a string value for a given registry root Key.
-func registryToString(reg registry.Key) string {
-	if reg == registry.LOCAL_MACHINE {
-		return "LOCAL_MACHINE"
-	} else if reg == registry.CURRENT_USER {
-		return "CURRENT_USER"
-	} else {
-		return ""
-	}
-}
-
-func parsePath(entryValue string) (string, string, error) {
-	if entryValue == "" {
-		return "", "", errors.New("empty path")
-	}
-	// do some replacements to convert typical kernel paths to user paths
-	if strings.HasPrefix(entryValue, `\??\`) {
-		entryValue = entryValue[4:]
-	}
-	if len(entryValue) >= 11 && strings.ToLower(entryValue[:11]) == "\\systemroot" {
-		entryValue = strings.Replace(entryValue, entryValue[:11], os.Getenv("SystemRoot"), -1)
-	}
-	if len(entryValue) >= 8 && strings.ToLower(entryValue[:8]) == "system32" {
-		entryValue = strings.Replace(entryValue, entryValue[:8], fmt.Sprintf("%s\\System32", os.Getenv("SystemRoot")), -1)
-	}
-	// replace environment variables
-	entryValue, err := registry.ExpandString(entryValue)
-	if err != nil {
-		return "", "", err
-	}
-
-	// Now find the executable, analogous to how CreateProcess works
-	var executable string
-	var arguments string
-	if strings.HasPrefix(entryValue, "\"") {
-		// Quoted executable - look for closing quote
-		closingQuote := strings.Index(entryValue[1:], "\"")
-		if closingQuote < 0 {
-			return "", "", errors.New("unclosed quote")
-		}
-		executable = entryValue[1 : closingQuote+1]
-		arguments = entryValue[closingQuote+2:]
-	} else {
-		// Unquoted executable. Try to look for first word first and then extend the path if that fails, e.g.:
-		// For C:\Program Files\My Application\app.exe some args, first search for:
-		// C:\Program
-		// if that fails, look for:
-		// C:\Program Files\My
-		// And if that still fails, look for:
-		// C:\Program Files\My Application\app.exe
-		// ...
-		var spaceIndex int
-		for {
-			if spaceIndex == len(entryValue) {
-				// Could not find file
-				return "", "", errors.New("executable not found")
-			}
-			if nextSpace := strings.IndexAny(entryValue[spaceIndex+1:], " \t"); nextSpace < 0 {
-				spaceIndex = len(entryValue)
-			} else {
-				spaceIndex += nextSpace + 1
-			}
-			possibleExecutable := entryValue[:spaceIndex]
-			if exePath, err := exec.LookPath(possibleExecutable); err == nil {
-				executable = exePath
-				if spaceIndex < len(entryValue) {
-					arguments = entryValue[spaceIndex+1:]
-				}
-				break
-			}
-		}
-	}
-
-	arguments = strings.TrimSpace(arguments)
-	if v, err := cleanPath(executable); err == nil {
-		executable = v
-	}
-	return executable, arguments, nil
-}
-
-func stringToAutorun(entryType string, entryLocation string, entryValue string, toParse bool, entry string) *Autorun {
-	var imagePath = entryValue
-	var launchString = entryValue
-	var argsString = ""
-
-	if toParse {
-		executable, args, err := parsePath(entryValue)
-		if err == nil {
-			imagePath = executable
-			argsString = args
-		}
-	}
-
-	md5, _ := files.HashFile(imagePath, "md5")
-	sha1, _ := files.HashFile(imagePath, "sha1")
-	sha256, _ := files.HashFile(imagePath, "sha256")
-
-	newAutorun := Autorun{
-		Type:         entryType,
-		Location:     entryLocation,
-		ImagePath:    imagePath,
-		ImageName:    filepath.Base(imagePath),
-		Arguments:    argsString,
-		MD5:          md5,
-		SHA1:         sha1,
-		SHA256:       sha256,
-		Entry:        entry,
-		LaunchString: launchString,
-	}
-
-	return &newAutorun
-}
-
 // This function invokes all the platform-dependant functions.
-func getAutoruns() (records []*Autorun) {
-	records = append(records, windowsGetCurrentVersionRun()...)
-	records = append(records, windowsGetServices()...)
-	records = append(records, windowsGetStartupFiles()...)
-	// records = append(records, windowsGetTasks()...)
+func GetAllAutoruns() (records []*Autorun) {
+	records = append(records, WindowsGetCurrentVersionRun()...)
+	records = append(records, WindowsGetServices()...)
+	records = append(records, WindowsGetStartupFiles()...)
+	records = append(records, WindowsGetTasks()...)
 
 	return
 }
 
 // This function enumerates items registered through CurrentVersion\Run.
-func windowsGetCurrentVersionRun() (records []*Autorun) {
+func WindowsGetCurrentVersionRun() (records []*Autorun) {
 	regs := []registry.Key{
 		registry.LOCAL_MACHINE,
 		registry.CURRENT_USER,
@@ -177,10 +64,8 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 				}
 
 				imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), keyName)
-
 				// We pass the value string to a function to return an Autorun.
-				newAutorun := stringToAutorun("run_key", imageLocation, value, true, name)
-
+				newAutorun := stringToAutorun("run_key", imageLocation, value, name, true)
 				// Add the new autorun to the records.
 				records = append(records, newAutorun)
 			}
@@ -192,7 +77,7 @@ func windowsGetCurrentVersionRun() (records []*Autorun) {
 }
 
 // This function enumerates Windows Services.
-func windowsGetServices() (records []*Autorun) {
+func WindowsGetServices() (records []*Autorun) {
 	var reg registry.Key = registry.LOCAL_MACHINE
 	var servicesKey string = "System\\CurrentControlSet\\Services"
 
@@ -226,10 +111,8 @@ func windowsGetServices() (records []*Autorun) {
 		}
 
 		imageLocation := fmt.Sprintf("%s\\%s", registryToString(reg), subkeyPath)
-
 		// We pass the value string to a function to return an Autorun.
-		newAutorun := stringToAutorun("service", imageLocation, imagePath, true, "")
-
+		newAutorun := stringToAutorun("service", imageLocation, imagePath, "", true)
 		// Add the new autorun to the records.
 		records = append(records, newAutorun)
 	}
@@ -239,7 +122,7 @@ func windowsGetServices() (records []*Autorun) {
 
 // %ProgramData%\Microsoft\Windows\Start Menu\Programs\StartUp
 // %AppData%\Microsoft\Windows\Start Menu\Programs\Startup
-func windowsGetStartupFiles() (records []*Autorun) {
+func WindowsGetStartupFiles() (records []*Autorun) {
 	// We look for both global and user Startup folders.
 	folders := []string{
 		os.Getenv("ProgramData"),
@@ -267,10 +150,8 @@ func windowsGetStartupFiles() (records []*Autorun) {
 			}
 
 			filePath := filepath.Join(startupPath, fileEntry.Name())
-
 			// Instantiate new autorun record.
-			newAutorun := stringToAutorun("startup", startupPath, filePath, false, "")
-
+			newAutorun := stringToAutorun("startup", startupPath, filePath, "", false)
 			// Add new record to list.
 			records = append(records, newAutorun)
 		}
@@ -279,16 +160,27 @@ func windowsGetStartupFiles() (records []*Autorun) {
 	return
 }
 
-// cleanPath uses lookPath to search for the correct path to
-// the executable and cleans the file path.
-func cleanPath(file string) (string, error) {
-	file, err := exec.LookPath(file)
+// Extract scheduled tasks that trigger command launches.
+func WindowsGetTasks() (records []*Autorun) {
+	taskService, err := taskmaster.Connect()
 	if err != nil {
-		return "", err
+		return
 	}
-	return filepath.Clean(file), nil
+	defer taskService.Disconnect()
+
+	tasks, err := taskService.GetRegisteredTasks()
+	if err != nil {
+		return
+	}
+
+	for _, task := range tasks {
+		for _, action := range task.Definition.Actions {
+			if action.GetType() == taskmaster.TASK_ACTION_EXEC {
+				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, task.Name, true)
+				records = append(records, newAutorun)
+			}
+		}
+	}
+
+	return
 }
-
-// func windowsGetTasks() {
-
-// }

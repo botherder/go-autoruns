@@ -3,6 +3,6 @@
 package autoruns
 
 // This function just invokes all the platform-dependant functions.
-func getAutoruns() (records []*Autorun) {
+func GetAllAutoruns() (records []*Autorun) {
 	return
 }

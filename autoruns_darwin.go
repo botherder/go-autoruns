@@ -1,4 +1,7 @@
 //+build darwin
+// This file is part of go-autoruns.
+// Copyright (c) 2018-2021 Claudio Guarnieri
+// See the file 'LICENSE' for copying permission.
 
 package autoruns
 
@@ -8,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/botherder/go-files"
+	"github.com/botherder/go-savetime/hashes"
 	"howett.net/plist"
 )
 
@@ -39,12 +42,12 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 			if err != nil {
 				continue
 			}
+			defer reader.Close()
 
 			// Parse the plist file.
 			var p Plist
 			decoder := plist.NewDecoder(reader)
 			err = decoder.Decode(&p)
-			reader.Close()
 			if err != nil {
 				continue
 			}
@@ -64,9 +67,9 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 				arguments = strings.Join(p.ProgramArguments[1:], " ")
 			}
 
-			md5, _ := files.HashFile(imagePath, "md5")
-			sha1, _ := files.HashFile(imagePath, "sha1")
-			sha256, _ := files.HashFile(imagePath, "sha256")
+			md5, _ := hashes.FileMD5(imagePath)
+			sha1, _ := hashes.FileSHA1(imagePath)
+			sha256, _ := hashes.FileSHA256(imagePath)
 
 			newAutorun := Autorun{
 				Type:         entryType,
@@ -92,7 +95,7 @@ func parsePlists(entryType string, folders []string) (records []*Autorun) {
 }
 
 // This function just invokes all the platform-dependant functions.
-func getAutoruns() (records []*Autorun) {
+func GetAllAutoruns() (records []*Autorun) {
 	// Startup and run as root.
 	launchDaemons := []string{
 		"/Library/LaunchDaemons",
