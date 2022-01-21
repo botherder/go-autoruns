@@ -1,3 +1,4 @@
+//+build darwin
 // This file is part of go-autoruns.
 // Copyright (c) 2018-2021 Claudio Guarnieri
 // See the file 'LICENSE' for copying permission.
@@ -105,9 +106,15 @@ func GetAllAutoruns() (records []*Autorun) {
 		"/Library/LaunchAgents",
 		"/System/Library/LaunchAgents",
 	}
-	// Launch when current user logs in.
-	launchAgentsUser := []string{
-		filepath.Join(os.Getenv("HOME"), "Library", "LaunchAgents"),
+	// Launch when specific user logs in
+	launchAgentsUser := []string{}
+	if files, err := ioutil.ReadDir("/Users"); err == nil {
+		for _, f := range files {
+			if f.IsDir() {
+				launchAgentsUser = append(launchAgentsUser, filepath.Join("/Users", f.Name(), "Library", "LaunchAgents"))
+			}
+
+		}
 	}
 
 	records = append(records, parsePlists("launch_daemons", launchDaemons)...)
