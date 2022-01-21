@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/capnspacehook/taskmaster"
 	"golang.org/x/sys/windows/registry"
@@ -176,7 +177,15 @@ func WindowsGetTasks() (records []*Autorun) {
 	for _, task := range tasks {
 		for _, action := range task.Definition.Actions {
 			if action.GetType() == taskmaster.TASK_ACTION_EXEC {
-				newAutorun := stringToAutorun("task", task.Path, action.(taskmaster.ExecAction).Path, task.Name, true)
+				// From the observed behavior, the task scheduler quotes any unquoted executables that also contain spaces.
+				// This leads to some weird situations: For example, a task with path C:\Program, run with arguments
+				// Files\myapp.exe, will execute C:\Program Files\myapp.exe.
+				path := action.(taskmaster.ExecAction).Path
+				arguments := action.(taskmaster.ExecAction).Args
+				if strings.ContainsAny(path, " \t") && !(strings.HasPrefix(path, `"`) && strings.HasSuffix(path, `"`)) {
+					path = `"` + path + `"`
+				}
+				newAutorun := stringToAutorun("task", task.Path, path+" "+arguments, task.Name, true)
 				records = append(records, newAutorun)
 			}
 		}
